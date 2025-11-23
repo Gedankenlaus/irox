@@ -20,7 +20,7 @@ fn main() {
 
             format!("{coeff}x^{order}")
         })
-        .collect::<Vec<_>>().join(" + ");
+        .fold("".to_string(), |acc, e| format!("{acc} + {e}"));
 
     println!("Current Series: {poly_as_str}");
 }
