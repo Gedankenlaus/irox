@@ -1,0 +1,7 @@
+[package]
+name = "poly_add"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+container = { path = "../container" }
