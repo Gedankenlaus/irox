@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use super::List;
 
-// Implement one for Mutable and Const references
 pub struct ListPos<'a, T> {
     position_index: Option<usize>,
     referenced_entry: &'a List<T>,
@@ -16,16 +15,21 @@ impl<'a, T> ListPos<'a, T> {
         }
     }
 
-    pub fn start_at(position: usize, ref_list: &'a List<T>) -> ListPos<'a, T> {
+    pub fn start_at(position: usize, ref_list: &'a List<T>) -> Option<ListPos<'a, T>> {
         let mut pos_index = ref_list.head_index;
+
+        if position >= ref_list.len(){
+            return None;
+        }
+
         for _ in 0..position{
             pos_index = ref_list.all_elements[pos_index].next_index;
         }
 
-        ListPos {
+        Some(ListPos {
             position_index: Some(pos_index),
             referenced_entry: ref_list,
-        }
+        })
     }
 }
 

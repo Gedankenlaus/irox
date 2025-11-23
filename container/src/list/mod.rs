@@ -61,7 +61,7 @@ pub struct List<T> {
 }
 
 struct ListEntry<T> {
-    hold_data: Rc<T>, // we hold a reference counted value here for convinience
+    hold_data: Rc<T>, // we hold a reference counted value here for convenience
     next_index: usize,
 }
 
@@ -143,22 +143,22 @@ impl<T> List<T> {
         }
     }
 
-    pub fn head(&self) -> Option<&T> {
-        if self.all_elements.len() == 0 {
+    pub fn head(&self) -> Option<Rc<T>> {
+        if self.len() == 0 {
             return None;
         }
-        Some(&self.all_elements[self.head_index].hold_data)
+        Some(Rc::clone(&self.all_elements[self.head_index].hold_data))
     }
 
-    pub fn head_iter(&mut self) -> ListPos<'_, T> {
+    pub fn head_iter(&self) -> Option<ListPos<'_, T>> {
         ListPos::start_at(0, self)
     }
 
-    pub fn head_iter_mut(&mut self) -> MutListPos<'_, T> {
+    pub fn head_iter_mut(&mut self) -> Option<MutListPos<'_, T>> {
         MutListPos::start_at(0, self)
     }
 
-    pub fn iter(&mut self) -> ListPos<'_, T> {
+    pub fn iter(&self) -> ListPos<'_, T> {
         ListPos::new(self)
     }
 
@@ -166,17 +166,16 @@ impl<T> List<T> {
         MutListPos::new(self)
     }
 
-    pub fn pos_iter(&mut self, pos: usize) -> ListPos<'_, T> {
+    pub fn pos_iter(&self, pos: usize) -> Option<ListPos<'_, T>> {
         ListPos::start_at(pos, self)
     }
 
-    pub fn pos_iter_mut(&mut self, pos: usize) -> MutListPos<'_, T> {
+    pub fn pos_iter_mut(&mut self, pos: usize) -> Option<MutListPos<'_, T>> {
         MutListPos::start_at(pos, self)
     }
 
-    pub fn at(&self, index: usize) -> Option<&T> {
-        let list_len = self.all_elements.len() - self.free_indices.len();
-        if index >= list_len {
+    pub fn at(&self, index: usize) -> Option<Rc<T>> {
+        if index >= self.len() {
             return None;
         }
 
@@ -184,7 +183,7 @@ impl<T> List<T> {
         for _ in 0..index {
             actual_insertion_index = self.all_elements[actual_insertion_index].next_index;
         }
-        Some(&self.all_elements[actual_insertion_index].hold_data)
+        Some(Rc::clone(&self.all_elements[actual_insertion_index].hold_data))
     }
 
     pub fn insert_before(&mut self, insert_index: usize, element: T) {
@@ -192,6 +191,9 @@ impl<T> List<T> {
     }
 
     pub fn insert_before_shared(&mut self, insert_index: usize, element: Rc<T>) {
+        if insert_index >= self.len() {
+            return;
+        }
         // this element will be the new head
         if insert_index == self.head_index {
             match self.free_indices.pop_front() {
@@ -236,5 +238,22 @@ impl<T> List<T> {
                 self.all_elements[free_index] = inserted_element;
             }
         };
+    }
+
+    pub fn len(&self) -> usize
+    {
+        // free_indices is always smaller or equal then all_elements
+        self.all_elements.len() - self.free_indices.len()
+    }
+
+    pub fn remove_at(&mut self, index: usize)
+        where T: Default
+    {
+        match self.pos_iter_mut(index) {
+            Some(rem_iter) => {
+                rem_iter.remove();
+            }
+            None => {}
+        }
     }
 }

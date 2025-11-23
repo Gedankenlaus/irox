@@ -16,16 +16,20 @@ impl<'a, T> MutListPos<'a, T> {
         }
     }
 
-    pub fn start_at(position: usize, ref_list: &'a mut List<T>) -> MutListPos<'a, T> {
+    pub fn start_at(position: usize, ref_list: &'a mut List<T>) -> Option<MutListPos<'a, T>> {
+        if position >= ref_list.len(){
+            return None;
+        }
+
         let mut pos_index = ref_list.head_index;
         for _ in 0..position{
             pos_index = ref_list.all_elements[pos_index].next_index;
         }
 
-        MutListPos {
+       Some(MutListPos {
             position_index: Some(pos_index),
             referenced_entry: ref_list,
-        }
+        })
     }
 
     pub fn remove(self)
