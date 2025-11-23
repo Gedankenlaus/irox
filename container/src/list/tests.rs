@@ -1,6 +1,6 @@
 use super::*;
 
-macro_rules! assert_some_rc {
+macro_rules! assert_some_rc_eq {
     ($left:expr, $right:expr $(,)?) => {
         assert!($left.is_some_and(|rc_val| *rc_val == $right));
     };
@@ -17,7 +17,7 @@ fn tc1_instantion_single_zero() {
     let lists_with_single_zero = [List::new(0), List::from_array([0])];
 
     for tested_list in lists_with_single_zero {
-        assert_some_rc!(tested_list.head(), 0);
+        assert_some_rc_eq!(tested_list.head(), 0);
     }
 }
 
@@ -27,19 +27,19 @@ fn tc2_append_insert_element() {
     assert!(dynamic_list.head().is_none());
 
     dynamic_list.append(0);
-    assert_some_rc!(dynamic_list.head(), 0);
+    assert_some_rc_eq!(dynamic_list.head(), 0);
 
     dynamic_list.append(1);
-    assert_some_rc!(dynamic_list.at(1), 1);
+    assert_some_rc_eq!(dynamic_list.at(1), 1);
 
     assert!(dynamic_list.at(2).is_none());
 
     dynamic_list.insert_before(1, 3);
-    assert_some_rc!(dynamic_list.at(1), 3);
+    assert_some_rc_eq!(dynamic_list.at(1), 3);
 
     // insert before head elemnt
     dynamic_list.insert_before(0, 4);
-    assert_some_rc!(dynamic_list.head(), 4);
+    assert_some_rc_eq!(dynamic_list.head(), 4);
     // see if the head points to the right element
     let test_iter = dynamic_list.head_iter();
     assert!(test_iter.is_some_and(|mut unwrapped_iter| {
@@ -72,13 +72,13 @@ fn tc4_remove_element() {
     assert!(rem_iter_opt.is_some());
     rem_iter_opt.unwrap().remove(); // remove consumes the iterator
 
-    assert_some_rc!(test_list.at(0), 0);
-    assert_some_rc!(test_list.at(1), 2);
+    assert_some_rc_eq!(test_list.at(0), 0);
+    assert_some_rc_eq!(test_list.at(1), 2);
 
     let rem_iter_opt2 = test_list.head_iter_mut();
     assert!(rem_iter_opt2.is_some());
     rem_iter_opt2.unwrap().remove();
-    assert_some_rc!(test_list.at(0), 2);
+    assert_some_rc_eq!(test_list.at(0), 2);
 
     let rem_iter_opt2 = test_list.head_iter_mut();
     assert!(rem_iter_opt2.is_some());
@@ -110,7 +110,7 @@ fn tc4_remove_element() {
 
     // We also need to test the append after removal
     strong_ref_list.append_shared(Rc::new(4));
-    assert_some_rc!(strong_ref_list.at(2), 4);
+    assert_some_rc_eq!(strong_ref_list.at(2), 4);
 }
 
 #[test]
@@ -118,11 +118,11 @@ fn tc5_test_remove_at() {
     let mut test_list = List::from_array([0, 1, 2]);
 
     test_list.remove_at(1);
-    assert_some_rc!(test_list.at(0), 0);
-    assert_some_rc!(test_list.at(1), 2);
+    assert_some_rc_eq!(test_list.at(0), 0);
+    assert_some_rc_eq!(test_list.at(1), 2);
 
     test_list.remove_at(0);
-    assert_some_rc!(test_list.at(0), 2);
+    assert_some_rc_eq!(test_list.at(0), 2);
     test_list.remove_at(0);
     assert!(test_list.at(0).is_none());
 }
