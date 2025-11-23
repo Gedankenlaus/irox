@@ -80,7 +80,7 @@ fn tc3_next_element() {
 fn tc4_remove_element() {
     let mut test_list = List::from_array([0, 1, 2]);
 
-    let rem_iter_opt = test_list.pos_iter_mut(1);
+    let rem_iter_opt = test_list.pos_mut(1);
     assert_some!(rem_iter_opt);
     rem_iter_opt.unwrap().remove(); // remove consumes the iterator
 
@@ -114,7 +114,7 @@ fn tc4_remove_element() {
     assert_eq!(Rc::strong_count(&element1), 2);
     assert_eq!(Rc::strong_count(&element2), 2);
 
-    strong_ref_list.pos_iter_mut(1).unwrap().remove();
+    strong_ref_list.pos_mut(1).unwrap().remove();
 
     // Now the reference is decreased since the element in
     // the list doesn't exist anymore
@@ -133,7 +133,7 @@ fn tc5_test_remove_at() {
     assert_some_rc_eq!(test_list.at(0), 0);
     assert_some_rc_eq!(test_list.at(1), 2);
 
-    test_list.remove_at(0);
+    assert_some_rc_eq!(test_list.remove_at(0), 0);
     assert_some_rc_eq!(test_list.at(0), 2);
     test_list.remove_at(0);
     assert_none!(test_list.at(0));

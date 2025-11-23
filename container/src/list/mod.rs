@@ -11,12 +11,11 @@ use self::list_pos_mut::MutListPos;
 #[cfg(test)]
 mod tests;
 
-
 /// A single linked list that can be used for dynamic insertion/removal
 ///
 /// The "default" usage of this type as a list is to use [`append`] to add to
 /// the list. Iterating over `List` goes front to back.
-/// 
+///
 ///
 /// A `List` with a known list of items can be initialized from an array:
 ///
@@ -26,7 +25,7 @@ mod tests;
 /// let mut linked_list = List::from_array([-1, 0, 1]);
 /// linked_list.append(2);
 /// ```
-/// 
+///
 /// If you want to insert an element at a specific index you can use [`insert_before`]:
 /// ```
 /// use container::List;
@@ -45,7 +44,7 @@ mod tests;
 /// let mut linked_list = List::from_array([-1, 0, 1]);
 /// let rc_element = Rc::new(2);
 /// linked_list.append_shared(Rc::clone(&rc_element));
-/// 
+///
 /// assert_eq!(Rc::strong_count(&rc_element), 2);
 /// ```
 /// This is more aligned to the behavior of a linked list.
@@ -96,19 +95,18 @@ impl<T> List<T> {
         }
 
         let mut consumed_elements = VecDeque::from(given_array);
-
-        for cur_index in 0..consumed_elements.len() {
+        let mut cur_index = 0;
+        while let Some(consumed_element) = consumed_elements.pop_front() {
+            cur_index += 1;
             instantiated_list.all_elements.push(ListEntry {
-                hold_data: Rc::new(consumed_elements.pop_front().unwrap()),
-                next_index: cur_index + 1,
+                hold_data: Rc::new(consumed_element),
+                next_index: cur_index,
             });
         }
-        instantiated_list.tail_index = instantiated_list.all_elements.len() - 1;
-        instantiated_list
-            .all_elements
-            .last_mut()
-            .unwrap()
-            .next_index = instantiated_list.tail_index;
+
+        let tail_index = instantiated_list.all_elements.len() - 1;
+        instantiated_list.tail_index = tail_index;
+        instantiated_list.all_elements[tail_index].next_index = tail_index;
 
         instantiated_list
     }
@@ -166,24 +164,20 @@ impl<T> List<T> {
         MutListPos::new(self)
     }
 
-    pub fn pos_iter(&self, pos: usize) -> Option<ListPos<'_, T>> {
+    pub fn pos(&self, pos: usize) -> Option<ListPos<'_, T>> {
         ListPos::start_at(pos, self)
     }
 
-    pub fn pos_iter_mut(&mut self, pos: usize) -> Option<MutListPos<'_, T>> {
+    pub fn pos_mut(&mut self, pos: usize) -> Option<MutListPos<'_, T>> {
         MutListPos::start_at(pos, self)
     }
 
     pub fn at(&self, index: usize) -> Option<Rc<T>> {
-        if index >= self.len() {
+        if index >= self.len(){
             return None;
         }
 
-        let mut actual_insertion_index = self.head_index;
-        for _ in 0..index {
-            actual_insertion_index = self.all_elements[actual_insertion_index].next_index;
-        }
-        Some(Rc::clone(&self.all_elements[actual_insertion_index].hold_data))
+        self.iter().nth(index)
     }
 
     pub fn insert_before(&mut self, insert_index: usize, element: T) {
@@ -240,20 +234,16 @@ impl<T> List<T> {
         };
     }
 
-    pub fn len(&self) -> usize
-    {
+    pub fn len(&self) -> usize {
         // free_indices is always smaller or equal then all_elements
         self.all_elements.len() - self.free_indices.len()
     }
 
-    pub fn remove_at(&mut self, index: usize)
-        where T: Default
+    pub fn remove_at(&mut self, index: usize) -> Option<Rc<T>>
+    where
+        T: Default,
     {
-        match self.pos_iter_mut(index) {
-            Some(rem_iter) => {
-                rem_iter.remove();
-            }
-            None => {}
-        }
+        self.pos_mut(index)
+            .and_then(|pos_iter| pos_iter.remove())
     }
 }
