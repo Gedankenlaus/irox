@@ -6,10 +6,22 @@ macro_rules! assert_some_rc_eq {
     };
 }
 
+macro_rules! assert_none {
+    ($cond:expr $(,)?) => {
+        assert!($cond.is_none());
+    };
+}
+
+macro_rules! assert_some {
+    ($cond:expr $(,)?) => {
+        assert!($cond.is_some());
+    };
+}
+
 #[test]
 fn tc0_instantion_empty() {
     let empty_linked_list: List<i32> = List::from_array([]);
-    assert_eq!(empty_linked_list.head(), None);
+    assert_none!(empty_linked_list.head());
 }
 
 #[test]
@@ -69,21 +81,21 @@ fn tc4_remove_element() {
     let mut test_list = List::from_array([0, 1, 2]);
 
     let rem_iter_opt = test_list.pos_iter_mut(1);
-    assert!(rem_iter_opt.is_some());
+    assert_some!(rem_iter_opt);
     rem_iter_opt.unwrap().remove(); // remove consumes the iterator
 
     assert_some_rc_eq!(test_list.at(0), 0);
     assert_some_rc_eq!(test_list.at(1), 2);
 
     let rem_iter_opt2 = test_list.head_iter_mut();
-    assert!(rem_iter_opt2.is_some());
+    assert_some!(rem_iter_opt2);
     rem_iter_opt2.unwrap().remove();
     assert_some_rc_eq!(test_list.at(0), 2);
 
     let rem_iter_opt2 = test_list.head_iter_mut();
-    assert!(rem_iter_opt2.is_some());
+    assert_some!(rem_iter_opt2);
     rem_iter_opt2.unwrap().remove(); // Remove last element
-    assert_eq!(test_list.at(0), None);
+    assert_none!(test_list.at(0));
 
     // We need now verify whether the removal also removes the ownership of
     // the Rc value
@@ -124,5 +136,5 @@ fn tc5_test_remove_at() {
     test_list.remove_at(0);
     assert_some_rc_eq!(test_list.at(0), 2);
     test_list.remove_at(0);
-    assert!(test_list.at(0).is_none());
+    assert_none!(test_list.at(0));
 }
