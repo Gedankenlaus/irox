@@ -7,10 +7,6 @@ name = "container"
 version = "0.1.0"
 
 [[package]]
-name = "irox"
-version = "0.1.0"
-
-[[package]]
 name = "poly_add"
 version = "0.1.0"
 dependencies = [

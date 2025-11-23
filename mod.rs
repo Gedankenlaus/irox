@@ -1,2 +1,2 @@
-// irox will be the general
+// irox will be the general module
 pub mod irox;
