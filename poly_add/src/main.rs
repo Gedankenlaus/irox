@@ -4,9 +4,13 @@ pub mod poly;
 
 use poly::Polynomial;
 
-fn main() {
+
+fn main() -> Result<(), ()> {
     let x = Polynomial::new();
     let poly_series = 3.0 * x.to(2) + 1.0 * x.to(3) + 3.0 * x.to(4);
+
+    //let ref_val = poly_series.get(1).ok_or(())?;
+    println!("Order at index 1: {}", poly_series[1].order);
 
     // use map for formatting the poly string
     let poly_as_str: String = poly_series
@@ -23,4 +27,6 @@ fn main() {
         .fold("".to_string(), |acc, e| format!("{acc} + {e}"));
 
     println!("Current Series: {poly_as_str}");
+
+    Ok(())
 }

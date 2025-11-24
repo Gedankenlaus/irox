@@ -1,6 +1,8 @@
+use std::cmp;
+use std::collections::VecDeque;
+use std::ops::Index;
 use std::rc::Rc;
 use std::usize;
-use std::{collections::VecDeque, vec};
 
 mod list_pos;
 use self::list_pos::ListPos;
@@ -65,20 +67,7 @@ struct ListEntry<T> {
 }
 
 impl<T> List<T> {
-    // Take full ownership
-    pub fn new(first_element: T) -> List<T> {
-        List {
-            head_index: 0,
-            tail_index: 0,
-            all_elements: vec![ListEntry {
-                hold_data: Rc::new(first_element),
-                next_index: 0,
-            }],
-            free_indices: VecDeque::new(),
-        }
-    }
-
-    pub fn empty() -> List<T> {
+    pub fn new() -> List<T> {
         List {
             head_index: 0,
             tail_index: 0,
@@ -88,27 +77,22 @@ impl<T> List<T> {
     }
 
     pub fn from_array<const COUNT: usize>(given_array: [T; COUNT]) -> List<T> {
-        let mut instantiated_list = List::empty();
-
-        if given_array.is_empty() {
-            return instantiated_list;
+        match given_array.len() {
+            0 => List::new(),
+            arr_len => List {
+                head_index: 0,
+                tail_index: arr_len - 1,
+                all_elements: given_array
+                    .into_iter()
+                    .enumerate()
+                    .map(|(pos, value)| ListEntry {
+                        hold_data: Rc::new(value),
+                        next_index: cmp::min(pos + 1, arr_len - 1),
+                    })
+                    .collect(),
+                free_indices: VecDeque::new(),
+            },
         }
-
-        let mut consumed_elements = VecDeque::from(given_array);
-        let mut cur_index = 0;
-        while let Some(consumed_element) = consumed_elements.pop_front() {
-            cur_index += 1;
-            instantiated_list.all_elements.push(ListEntry {
-                hold_data: Rc::new(consumed_element),
-                next_index: cur_index,
-            });
-        }
-
-        let tail_index = instantiated_list.all_elements.len() - 1;
-        instantiated_list.tail_index = tail_index;
-        instantiated_list.all_elements[tail_index].next_index = tail_index;
-
-        instantiated_list
     }
 
     pub fn append(&mut self, element: T) {
@@ -116,36 +100,30 @@ impl<T> List<T> {
     }
 
     pub fn append_shared(&mut self, element: Rc<T>) {
-        match self.free_indices.pop_front() {
-            None => {
-                match self.all_elements.last_mut() {
-                    Some(last_element) => {
-                        self.tail_index += 1;
-                        last_element.next_index = self.tail_index;
-                    }
-                    None => {}
-                }
+        if let Some(free_index) = self.free_indices.pop_front() {
+            self.all_elements[self.tail_index].next_index = free_index;
+            self.tail_index = free_index;
+            self.all_elements[free_index].hold_data = element;
+            self.all_elements[free_index].next_index = free_index;
+        } else {
+            if let Some(last_element) = self.all_elements.last_mut() {
+                self.tail_index += 1;
+                last_element.next_index = self.tail_index;
+            }
 
-                // tail index references itself
-                self.all_elements.push(ListEntry {
-                    hold_data: element,
-                    next_index: self.tail_index,
-                });
-            }
-            Some(free_index) => {
-                self.all_elements[self.tail_index].next_index = free_index;
-                self.tail_index = free_index;
-                self.all_elements[free_index].hold_data = element;
-                self.all_elements[free_index].next_index = free_index;
-            }
+            // tail index references itself
+            self.all_elements.push(ListEntry {
+                hold_data: element,
+                next_index: self.tail_index,
+            });
         }
     }
 
     pub fn head(&self) -> Option<Rc<T>> {
-        if self.len() == 0 {
-            return None;
+        match self.len() {
+            0 => None,
+            _ => Some(Rc::clone(&self.all_elements[self.head_index].hold_data)),
         }
-        Some(Rc::clone(&self.all_elements[self.head_index].hold_data))
     }
 
     pub fn head_iter(&self) -> Option<ListPos<'_, T>> {
@@ -173,11 +151,24 @@ impl<T> List<T> {
     }
 
     pub fn at(&self, index: usize) -> Option<Rc<T>> {
-        if index >= self.len(){
+        if index >= self.len() {
             return None;
         }
 
         self.iter().nth(index)
+    }
+
+    pub fn get<'a>(&'a self, index: usize) -> Option<&'a T> {
+        if index >= self.len() {
+            return None;
+        }
+
+        let mut count_index = self.head_index;
+        for _ in 0..index {
+            count_index = self.all_elements[count_index].next_index;
+        }
+
+        Some(&self.all_elements[count_index].hold_data)
     }
 
     pub fn insert_before(&mut self, insert_index: usize, element: T) {
@@ -190,21 +181,18 @@ impl<T> List<T> {
         }
         // this element will be the new head
         if insert_index == self.head_index {
-            match self.free_indices.pop_front() {
-                None => {
-                    self.all_elements.push(ListEntry {
-                        hold_data: element,
-                        next_index: self.head_index,
-                    });
-                    self.head_index = self.all_elements.len() - 1;
-                }
-                Some(free_index) => {
-                    self.all_elements[free_index].hold_data = element;
-                    self.all_elements[free_index].next_index = self.head_index;
-                    self.head_index = free_index;
-                }
-            };
-
+            if let Some(free_index) = self.free_indices.pop_front(){
+                self.all_elements[free_index].hold_data = element;
+                self.all_elements[free_index].next_index = self.head_index;
+                self.head_index = free_index;
+            }
+            else {
+                self.all_elements.push(ListEntry {
+                    hold_data: element,
+                    next_index: self.head_index,
+                });
+                self.head_index = self.all_elements.len() - 1;
+            }
             return;
         }
 
@@ -222,16 +210,14 @@ impl<T> List<T> {
             next_index: referenced_index,
         };
 
-        match self.free_indices.pop_front() {
-            None => {
-                self.all_elements[prev_insertion_index].next_index = self.all_elements.len();
-                self.all_elements.push(inserted_element);
-            }
-            Some(free_index) => {
-                self.all_elements[prev_insertion_index].next_index = free_index;
-                self.all_elements[free_index] = inserted_element;
-            }
-        };
+        if let Some(free_index) = self.free_indices.pop_front() {
+            self.all_elements[prev_insertion_index].next_index = free_index;
+            self.all_elements[free_index] = inserted_element;
+        }
+        else {
+            self.all_elements[prev_insertion_index].next_index = self.all_elements.len();
+            self.all_elements.push(inserted_element);
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -243,7 +229,15 @@ impl<T> List<T> {
     where
         T: Default,
     {
-        self.pos_mut(index)
-            .and_then(|pos_iter| pos_iter.remove())
+        self.pos_mut(index).and_then(|pos_iter| pos_iter.remove())
+    }
+}
+
+impl<T> Index<usize> for List<T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        self.get(index)
+            .expect(format!("Index {index} out of range!").as_str())
     }
 }

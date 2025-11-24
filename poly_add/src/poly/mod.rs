@@ -68,7 +68,7 @@ impl Add<Polynomial> for List<Polynomial> {
 
     fn add(self, rhs: Polynomial) -> Self::Output {
         let mut contains_same_order = false;
-        let mut resulting_series = List::empty();
+        let mut resulting_series = List::new();
         for poly_element in self.iter() {
             if poly_element.order == rhs.order {
                 resulting_series.append(Polynomial {

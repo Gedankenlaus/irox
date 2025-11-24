@@ -26,7 +26,7 @@ fn tc0_instantion_empty() {
 
 #[test]
 fn tc1_instantion_single_zero() {
-    let lists_with_single_zero = [List::new(0), List::from_array([0])];
+    let lists_with_single_zero = [List::from_array([0])];
 
     for tested_list in lists_with_single_zero {
         assert_some_rc_eq!(tested_list.head(), 0);
@@ -104,7 +104,7 @@ fn tc4_remove_element() {
     let element1 = Rc::new(2);
     let element2 = Rc::new(3);
 
-    let mut strong_ref_list = List::empty();
+    let mut strong_ref_list = List::new();
 
     strong_ref_list.append_shared(Rc::clone(&element0));
     strong_ref_list.append_shared(Rc::clone(&element1));
